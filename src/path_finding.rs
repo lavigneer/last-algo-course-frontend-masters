@@ -8,13 +8,13 @@ struct Point {
 
 static DIRECTIONS: [(i32, i32); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
 
-fn walk<'a>(
+fn walk(
     maze: &Vec<&str>,
     wall: char,
     curr: Point,
     end: &Point,
-    seen: &'a mut HashSet<Point>,
-    path: &'a mut Vec<Point>,
+    seen: &mut HashSet<Point>,
+    path: &mut Vec<Point>,
 ) -> bool {
     if curr.eq(end) {
         path.push(curr);
