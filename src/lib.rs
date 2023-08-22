@@ -8,4 +8,5 @@ mod path_finding;
 mod queue;
 mod quick_sort;
 mod stack;
+mod tree;
 mod two_crystal_balls;
