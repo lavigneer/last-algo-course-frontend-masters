@@ -141,26 +141,46 @@ impl<T> DoublyLinkedList<T> {
     pub fn remove_at(&mut self, index: usize) {
         if let Some(node_at) = self.get_at(index) {
             unsafe {
-                let before_node = (*node_at.as_ptr()).front;
-                let after_node = (*node_at.as_ptr()).back;
+                let before_node = (*node_at.as_ptr()).back;
+                let after_node = (*node_at.as_ptr()).front;
                 match (before_node, after_node) {
                     (Some(before_node), Some(after_node)) => {
-                        (*before_node.as_ptr()).back = Some(after_node);
-                        (*after_node.as_ptr()).front = Some(before_node);
+                        (*before_node.as_ptr()).front = Some(after_node);
+                        (*after_node.as_ptr()).back = Some(before_node);
                         self.len -= 1;
                     }
                     (None, Some(after_node)) => {
-                        (*after_node.as_ptr()).front = None;
+                        (*after_node.as_ptr()).back = None;
                         self.len -= 1;
                     }
                     (Some(before_node), None) => {
-                        (*before_node.as_ptr()).back = None;
+                        (*before_node.as_ptr()).front = None;
                         self.len -= 1;
                     }
                     (None, None) => {}
                 }
             }
         }
+    }
+
+    pub fn insert_at(&mut self, elem: T, index: usize) {
+        unsafe {
+            if let Some(node_at) = self.get_at(index) {
+                let before_node = (*node_at.as_ptr()).back;
+                if let Some(inner_before_node) = before_node {
+                    let new = NonNull::new_unchecked(Box::into_raw(Box::new(Node {
+                        front: Some(node_at),
+                        back: before_node,
+                        elem,
+                    })));
+                    (*node_at.as_ptr()).back = Some(new);
+                    (*inner_before_node.as_ptr()).front = Some(new);
+                    self.len += 1;
+                    return;
+                }
+            }
+        }
+        panic!("Invalid index");
     }
 
     pub fn front(&self) -> Option<&T> {
@@ -401,6 +421,32 @@ mod tests {
         assert_eq!(list.pop_back(), Some(1));
         assert_eq!(list.len(), 3);
         assert_eq!(list.pop_back(), Some(2));
+        assert_eq!(list.len(), 2);
+        assert_eq!(list.pop_back(), Some(4));
+        assert_eq!(list.len(), 1);
+        assert_eq!(list.pop_back(), Some(5));
+        assert_eq!(list.len(), 0);
+    }
+
+    #[test]
+    fn insert_at_works() {
+        let mut list = DoublyLinkedList::new();
+        list.push_front(1);
+        list.push_front(2);
+        list.push_front(3);
+        list.push_front(4);
+        list.push_front(5);
+
+        assert_eq!(list.len(), 5);
+        list.insert_at(6, 2);
+        assert_eq!(list.len(), 6);
+        assert_eq!(list.pop_back(), Some(1));
+        assert_eq!(list.len(), 5);
+        assert_eq!(list.pop_back(), Some(2));
+        assert_eq!(list.len(), 4);
+        assert_eq!(list.pop_back(), Some(6));
+        assert_eq!(list.len(), 3);
+        assert_eq!(list.pop_back(), Some(3));
         assert_eq!(list.len(), 2);
         assert_eq!(list.pop_back(), Some(4));
         assert_eq!(list.len(), 1);
