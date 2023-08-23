@@ -43,7 +43,20 @@ fn in_order_walk<'a, T>(curr: Option<&BinaryNode<'a, T>>, mut path: Vec<&'a T>) 
     }
 }
 
-impl<'a, T: Eq + PartialEq> BinaryNode<'a, T> {
+fn depth_first_search<'a, T: Eq + PartialEq + Ord + PartialOrd>(
+    curr: Option<&BinaryNode<'a, T>>,
+    needle: &'a T,
+) -> bool {
+    match curr {
+        None => false,
+        Some(node) if node.value == needle => true,
+        Some(node) if node.value > needle => depth_first_search(node.left.as_deref(), needle),
+        Some(node) if node.value < needle => depth_first_search(node.right.as_deref(), needle),
+        _ => unreachable!("Something went wrong here..."),
+    }
+}
+
+impl<'a, T: Eq + PartialEq + Ord + PartialOrd> BinaryNode<'a, T> {
     pub fn pre_order(&self) -> Vec<&T> {
         pre_order_walk(Some(self), vec![])
     }
@@ -72,6 +85,10 @@ impl<'a, T: Eq + PartialEq> BinaryNode<'a, T> {
         }
 
         false
+    }
+
+    pub fn depth_first_search(&self, needle: &T) -> bool {
+        depth_first_search(Some(self), needle)
     }
 }
 
@@ -160,6 +177,14 @@ mod tests {
         assert!(tree.breadth_first_search(&45));
         assert!(tree.breadth_first_search(&7));
         assert!(!tree.breadth_first_search(&69));
+    }
+
+    #[test]
+    fn dfs() {
+        let tree: BinaryNode<i32> = Default::default();
+        assert!(tree.depth_first_search(&45));
+        assert!(tree.depth_first_search(&7));
+        assert!(!tree.depth_first_search(&69));
     }
 
     #[test]
