@@ -1,3 +1,6 @@
+use std::collections::VecDeque;
+
+#[derive(Debug)]
 struct BinaryNode<'a, T> {
     value: &'a T,
     left: Option<Box<BinaryNode<'a, T>>>,
@@ -40,7 +43,7 @@ fn in_order_walk<'a, T>(curr: Option<&BinaryNode<'a, T>>, mut path: Vec<&'a T>) 
     }
 }
 
-impl<'a, T> BinaryNode<'a, T> {
+impl<'a, T: Eq + PartialEq> BinaryNode<'a, T> {
     pub fn pre_order(&self) -> Vec<&T> {
         pre_order_walk(Some(self), vec![])
     }
@@ -51,6 +54,32 @@ impl<'a, T> BinaryNode<'a, T> {
 
     pub fn in_order(&self) -> Vec<&T> {
         in_order_walk(Some(self), vec![])
+    }
+
+    pub fn breadth_first_search(&'a self, needle: &T) -> bool {
+        let mut queue: VecDeque<&'a BinaryNode<'a, T>> = VecDeque::from([self]);
+
+        while let Some(curr) = queue.pop_front() {
+            if curr.value == needle {
+                return true;
+            }
+            if let Some(left) = &curr.left {
+                queue.push_back(left);
+            }
+            if let Some(right) = &curr.right {
+                queue.push_back(right);
+            }
+        }
+
+        false
+    }
+}
+
+impl<'a, T: Eq> Eq for BinaryNode<'a, T> {}
+
+impl<'a, T: PartialEq> PartialEq for BinaryNode<'a, T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value && self.left == other.left && self.right == other.right
     }
 }
 
@@ -123,5 +152,61 @@ mod tests {
         let tree: BinaryNode<i32> = Default::default();
         let order = tree.pre_order();
         assert_eq!(order, vec![&20, &10, &5, &7, &15, &50, &30, &29, &45, &100])
+    }
+
+    #[test]
+    fn bfs() {
+        let tree: BinaryNode<i32> = Default::default();
+        assert!(tree.breadth_first_search(&45));
+        assert!(tree.breadth_first_search(&7));
+        assert!(!tree.breadth_first_search(&69));
+    }
+
+    #[test]
+    fn compare() {
+        let tree: BinaryNode<i32> = Default::default();
+        let tree2 = BinaryNode {
+            value: &20,
+            right: Some(Box::new(BinaryNode {
+                value: &50,
+                right: None,
+                left: Some(Box::new(BinaryNode {
+                    value: &30,
+                    right: Some(Box::new(BinaryNode {
+                        value: &45,
+                        right: Some(Box::new(BinaryNode {
+                            value: &49,
+                            left: None,
+                            right: None,
+                        })),
+                        left: None,
+                    })),
+                    left: Some(Box::new(BinaryNode {
+                        value: &29,
+                        right: None,
+                        left: None,
+                    })),
+                })),
+            })),
+            left: Some(Box::new(BinaryNode {
+                value: &10,
+                right: Some(Box::new(BinaryNode {
+                    value: &15,
+                    right: None,
+                    left: None,
+                })),
+                left: Some(Box::new(BinaryNode {
+                    value: &5,
+                    right: Some(Box::new(BinaryNode {
+                        value: &7,
+                        right: None,
+                        left: None,
+                    })),
+                    left: None,
+                })),
+            })),
+        };
+        assert_eq!(tree, tree);
+        assert_ne!(tree, tree2);
     }
 }
